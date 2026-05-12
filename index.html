@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ParkShare — Community Parking</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -13,19 +12,27 @@
       <span class="logo">P</span>
       <h1>ParkShare</h1>
     </div>
-    <nav>
+    <nav class="header-actions">
+      <button id="trafficToggle" class="btn btn-secondary" title="Toggle road traffic layer">🚦 Traffic</button>
       <button id="reportBtn" class="btn btn-primary">+ Report Spot</button>
     </nav>
   </header>
 
+  <!-- Busyness legend -->
+  <div class="legend">
+    <span class="legend-title">Community busyness:</span>
+    <span class="legend-item"><span class="dot dot-green"></span> Not busy</span>
+    <span class="legend-item"><span class="dot dot-yellow"></span> Medium</span>
+    <span class="legend-item"><span class="dot dot-red"></span> Busy</span>
+    <span class="legend-item"><span class="dot dot-gray"></span> Stale</span>
+  </div>
+
   <main class="home-layout">
-    <!-- Map View -->
     <section class="map-section">
       <div id="map"></div>
       <button id="locateBtn" class="locate-btn" title="My Location">📍</button>
     </section>
 
-    <!-- List View -->
     <section class="list-section">
       <div class="list-header">
         <h2>Nearby Free Spots</h2>
@@ -51,7 +58,7 @@
         </label>
         <label>
           Number of Free Spots
-          <input type="number" id="freeSpots" min="1" max="50" value="1" required />
+          <input type="number" id="freeSpots" min="0" max="50" value="3" required />
         </label>
         <label>
           Default Parking Duration (minutes)
@@ -71,8 +78,20 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Configuration & data must load before Google Maps callback fires -->
+  <script src="js/config.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- Google Maps API loader. callback=initMap is required. -->
+  <script>
+    (function() {
+      const script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY + '&callback=initMap&v=weekly';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  </script>
 </body>
 </html>

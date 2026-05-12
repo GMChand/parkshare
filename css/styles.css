@@ -15,6 +15,13 @@
   --warn: #d97706;
   --danger: #c1272d;
   --border: #e3e1da;
+
+  /* Busyness signal colors */
+  --busy-green: #16a34a;
+  --busy-yellow: #eab308;
+  --busy-red: #dc2626;
+  --busy-gray: #9ca3af;
+
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.06);
   --radius: 14px;
@@ -46,11 +53,9 @@ body {
   z-index: 1000;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+.brand { display: flex; align-items: center; gap: 0.75rem; }
+
+.header-actions { display: flex; gap: 0.6rem; align-items: center; }
 
 .logo {
   display: inline-flex;
@@ -83,6 +88,36 @@ body {
 .back-link:hover { color: var(--accent); }
 
 /* ===========================
+   Legend bar
+   =========================== */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: center;
+  padding: 0.7rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.legend-title { font-weight: 600; color: var(--ink); }
+
+.legend-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.dot-green  { background: var(--busy-green); }
+.dot-yellow { background: var(--busy-yellow); }
+.dot-red    { background: var(--busy-red); }
+.dot-gray   { background: var(--busy-gray); }
+
+/* ===========================
    Buttons
    =========================== */
 .btn {
@@ -96,33 +131,21 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-primary {
-  background: var(--accent);
-  color: white;
-}
+.btn-primary { background: var(--accent); color: white; }
 .btn-primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
 
-.btn-secondary {
-  background: var(--accent-soft);
-  color: var(--accent-hover);
-}
+.btn-secondary { background: var(--accent-soft); color: var(--accent-hover); }
 .btn-secondary:hover { background: #b7e4c7; }
+.btn-secondary.active { background: var(--accent); color: white; }
 
-.btn-danger {
-  background: #fee2e2;
-  color: var(--danger);
-}
+.btn-danger { background: #fee2e2; color: var(--danger); }
 .btn-danger:hover { background: #fecaca; }
 
-.btn-large {
-  padding: 0.9rem 1.5rem;
-  font-size: 1.05rem;
-  width: 100%;
-}
+.btn-large { padding: 0.9rem 1.5rem; font-size: 1.05rem; width: 100%; }
 
 /* ===========================
    Home Layout (Map + List)
@@ -130,7 +153,7 @@ body {
 .home-layout {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 70px - 44px); /* header + legend */
 }
 
 @media (max-width: 900px) {
@@ -140,14 +163,9 @@ body {
   }
 }
 
-.map-section {
-  position: relative;
-}
+.map-section { position: relative; }
 
-#map {
-  width: 100%;
-  height: 100%;
-}
+#map { width: 100%; height: 100%; }
 
 .locate-btn {
   position: absolute;
@@ -161,7 +179,7 @@ body {
   font-size: 1.4rem;
   cursor: pointer;
   box-shadow: var(--shadow-md);
-  z-index: 500;
+  z-index: 5;
   transition: transform 0.2s;
 }
 .locate-btn:hover { transform: scale(1.08); }
@@ -195,11 +213,7 @@ body {
   font-weight: 600;
 }
 
-.spot-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
+.spot-list { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .empty-state {
   color: var(--ink-soft);
@@ -211,6 +225,7 @@ body {
 .spot-card {
   background: var(--bg);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--busy-gray); /* default; overridden by busyness class */
   border-radius: var(--radius);
   padding: 1rem 1.1rem;
   cursor: pointer;
@@ -219,18 +234,29 @@ body {
   color: inherit;
   display: block;
 }
-
 .spot-card:hover {
-  border-color: var(--accent);
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
+
+.spot-card.busy-green  { border-left-color: var(--busy-green); }
+.spot-card.busy-yellow { border-left-color: var(--busy-yellow); }
+.spot-card.busy-red    { border-left-color: var(--busy-red); }
+.spot-card.busy-gray   { border-left-color: var(--busy-gray); }
 
 .spot-card-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 0.5rem;
+  gap: 0.5rem;
+}
+
+.spot-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .spot-card h3 {
@@ -261,6 +287,23 @@ body {
 }
 .spot-card .meta span:first-child::before { content: ""; margin: 0; }
 
+/* Busyness pill (small label) */
+.busyness-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  color: white;
+  background: var(--busy-gray);
+  white-space: nowrap;
+}
+.busyness-pill.busy-green  { background: var(--busy-green); }
+.busyness-pill.busy-yellow { background: var(--busy-yellow); color: #422006; }
+.busyness-pill.busy-red    { background: var(--busy-red); }
+.busyness-pill.busy-gray   { background: var(--busy-gray); }
+
 /* ===========================
    Detail Page
    =========================== */
@@ -286,12 +329,20 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
 .detail-card h2 {
   font-family: 'Bricolage Grotesque', sans-serif;
   font-size: 1.7rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: 1.25rem;
 }
 
 .info-grid {
@@ -501,17 +552,11 @@ form input:focus, form textarea:focus {
   margin-top: 0.5rem;
 }
 
-/* Custom Leaflet marker style */
-.parking-marker {
-  background: var(--accent);
-  color: white;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  border: 3px solid white;
-  box-shadow: var(--shadow-sm);
+/* Google Maps InfoWindow style polish */
+.gm-style .gm-style-iw-c {
+  border-radius: var(--radius-sm) !important;
+  padding: 12px !important;
 }
+.iw-content { font-family: 'Inter', sans-serif; font-size: 0.9rem; }
+.iw-content strong { font-family: 'Bricolage Grotesque', sans-serif; }
+.iw-content a { color: var(--accent); font-weight: 600; }

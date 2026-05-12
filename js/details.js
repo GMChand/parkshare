@@ -1,14 +1,34 @@
 /* ===========================
    ParkShare — Spot Details Page
+   (Google Maps version)
    =========================== */
 
 let currentSpot = null;
 let timerInterval = null;
+let detailMap = null;
 
-// Read spot ID from URL
 function getSpotId() {
   const params = new URLSearchParams(window.location.search);
   return params.get('id');
+}
+
+function getBusyness(spot) {
+  const hoursSinceUpdate = (Date.now() - spot.updated) / (1000 * 60 * 60);
+  if (hoursSinceUpdate > BUSYNESS.STALE_HOURS) {
+    return { level: 'gray', label: 'Stale', color: '#9ca3af' };
+  }
+  if (spot.freeSpots >= BUSYNESS.GREEN_THRESHOLD) {
+    return { level: 'green', label: 'Not busy', color: '#16a34a' };
+  }
+  if (spot.freeSpots <= BUSYNESS.RED_THRESHOLD) {
+    return { level: 'red', label: 'Busy', color: '#dc2626' };
+  }
+  return { level: 'yellow', label: 'Medium', color: '#eab308' };
+}
+
+// Called by Google Maps loader once API is ready
+function initDetailMap() {
+  loadSpot();
 }
 
 function loadSpot() {
@@ -24,13 +44,18 @@ function loadSpot() {
     return;
   }
 
+  const busy = getBusyness(currentSpot);
+
   document.getElementById('detailName').textContent = currentSpot.name;
   document.getElementById('detailFreeSpots').textContent = currentSpot.freeSpots;
   document.getElementById('detailDuration').textContent = currentSpot.duration + ' min';
   document.getElementById('detailNotes').textContent = currentSpot.notes || 'No notes provided.';
   document.getElementById('detailUpdated').textContent = formatTimeAgo(currentSpot.updated);
 
-  // Distance (if user grants location)
+  const pill = document.getElementById('busynessPill');
+  pill.textContent = busy.label;
+  pill.className = 'busyness-pill busy-' + busy.level;
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition((pos) => {
       const dist = haversineDistance(pos.coords.latitude, pos.coords.longitude, currentSpot.lat, currentSpot.lng);
@@ -42,21 +67,34 @@ function loadSpot() {
     document.getElementById('detailDistance').textContent = 'Unknown';
   }
 
-  // Render mini-map
-  const miniMap = L.map('detailMap').setView([currentSpot.lat, currentSpot.lng], 16);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 19
-  }).addTo(miniMap);
-  const icon = L.divIcon({
-    className: '',
-    html: `<div class="parking-marker">P</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16]
+  // Render Google mini-map with traffic layer on by default
+  detailMap = new google.maps.Map(document.getElementById('detailMap'), {
+    center: { lat: currentSpot.lat, lng: currentSpot.lng },
+    zoom: 16,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false
   });
-  L.marker([currentSpot.lat, currentSpot.lng], { icon }).addTo(miniMap);
 
-  // Restore timer if it's for this spot
+  new google.maps.Marker({
+    position: { lat: currentSpot.lat, lng: currentSpot.lng },
+    map: detailMap,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 12,
+      fillColor: busy.color,
+      fillOpacity: 0.95,
+      strokeColor: '#ffffff',
+      strokeWeight: 3
+    },
+    label: { text: 'P', color: '#fff', fontWeight: '700', fontSize: '12px' }
+  });
+
+  // Show Google's road-traffic layer here — relevant context for "is the area busy?"
+  const trafficLayer = new google.maps.TrafficLayer();
+  trafficLayer.setMap(detailMap);
+
+  // Restore timer if it belongs to this spot
   const activeTimer = DataStore.getTimer();
   if (activeTimer && activeTimer.spotId === currentSpot.id) {
     startTimer(activeTimer.endsAt);
@@ -91,10 +129,8 @@ function updateTimerDisplay(endsAt) {
   const hours = Math.floor(remaining / 3600000);
   const minutes = Math.floor((remaining % 3600000) / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
-
   display.textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 
-  // Warning when < 10 minutes remain
   if (remaining < 10 * 60 * 1000) {
     display.classList.add('warning');
     label.textContent = '⏰ Less than 10 minutes left';
@@ -169,5 +205,5 @@ document.querySelectorAll('.close-btn').forEach(btn => {
   });
 });
 
-// Boot
-window.addEventListener('DOMContentLoaded', loadSpot);
+// Required for Google Maps callback to find it
+window.initDetailMap = initDetailMap;

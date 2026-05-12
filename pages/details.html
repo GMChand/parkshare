@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spot Details — ParkShare</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 <body>
@@ -19,7 +18,10 @@
     <div id="detailMap" class="detail-map"></div>
 
     <div class="detail-card">
-      <h2 id="detailName">Loading...</h2>
+      <div class="detail-title-row">
+        <h2 id="detailName">Loading...</h2>
+        <span id="busynessPill" class="busyness-pill">--</span>
+      </div>
       <div class="info-grid">
         <div class="info-item">
           <span class="label">Free Spots</span>
@@ -50,7 +52,6 @@
       </div>
     </div>
 
-    <!-- Timer Section (hidden until user parks) -->
     <div id="timerSection" class="timer-section hidden">
       <h3>Parking Timer</h3>
       <div id="timerDisplay" class="timer-display">00:00:00</div>
@@ -62,7 +63,6 @@
     </div>
   </main>
 
-  <!-- Adjust Timer Modal -->
   <div id="adjustModal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
@@ -79,7 +79,6 @@
     </div>
   </div>
 
-  <!-- Correct Info Modal -->
   <div id="correctModal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
@@ -107,8 +106,18 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
   <script src="../js/details.js"></script>
+
+  <script>
+    (function() {
+      const script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY + '&callback=initDetailMap&v=weekly';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  </script>
 </body>
 </html>

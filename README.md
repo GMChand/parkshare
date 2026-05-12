@@ -1,34 +1,67 @@
 # ParkShare — Community-Driven Parking 🅿️
 
-A lightweight, community-driven web app for finding and sharing free parking spots in real time. Built with vanilla HTML, CSS, JavaScript, and Leaflet maps. No backend required — runs entirely in the browser using `localStorage`.
+A community-driven web app for finding and sharing free parking spots in real time. Built with vanilla HTML, CSS, JavaScript, and **Google Maps**. Hosts perfectly on GitHub Pages.
 
 ## ✨ Features
 
-- 🗺️ **Real-time map view** of community-reported parking spots
-- 📋 **Distance-sorted list** of nearby free spots
-- 📍 **Geolocation** support to find your current position
-- 🅿️ **Spot details** with free count, time limit, and community notes
-- ⏱️ **Smart parking timer** that auto-starts when you confirm parking
-- ✏️ **Community contributions** — report new spots, correct info, or delete obsolete entries
-- 📱 **Responsive** design (works on mobile and desktop)
+- 🗺️ **Google Maps view** of community-reported parking spots
+- 🚦 **Live road traffic layer** (Google's real-time traffic) — toggle on/off
+- 🟢🟡🔴 **Community busyness indicator** — each spot shows green/yellow/red based on free spots reported
+- 📋 **Distance-sorted list** of nearby spots
+- 📍 **Geolocation** support
+- ⏱️ **Smart parking timer** with adjustable duration
+- ✏️ **Community contributions** — report, correct, delete spots
 
-## 🚀 Quick Start
+## ⚠️ Before You Start: Get a Google Maps API Key
 
-### Run locally
-1. Clone this repo or download the ZIP.
-2. Open `index.html` in your browser. That's it.
+This app needs a Google Maps JavaScript API key.
 
-### Run with Visual Studio (or VS Code)
-1. Open the folder in Visual Studio / VS Code.
-2. Install the **Live Server** extension (in VS Code) or use Visual Studio's built-in static web server.
-3. Right-click `index.html` → "Open with Live Server".
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) and sign in.
+2. Create a new project (e.g. "parkshare").
+3. Search **"Maps JavaScript API"** at the top → **Enable**. You'll be asked to set up billing (credit card required, but the free tier covers ~28,000 map loads/month — far more than a demo needs).
+4. **APIs & Services → Credentials → Create Credentials → API key**. Copy the key.
+5. **Restrict the key** (important):
+   - **Application restrictions:** HTTP referrers → add `http://localhost/*` and `https://YOUR-USERNAME.github.io/*`
+   - **API restrictions:** select only **Maps JavaScript API**
+6. Open `js/config.js` and paste your key:
+   ```js
+   const GOOGLE_MAPS_API_KEY = 'AIzaSyXXXXXXXXXXXXXXXXXXXXXXXX';
+   ```
 
-## 🌐 Hosting on GitHub Pages
+## 🚀 Run It
 
-1. Push this repo to GitHub.
-2. In your repo, go to **Settings → Pages**.
-3. Under **Source**, choose **Deploy from a branch** → `main` → `/ (root)`.
-4. Save. Your app is live at `https://<username>.github.io/<repo-name>/`.
+### Locally
+Because of the API key referrer restriction, you can't just double-click `index.html`. Use a simple local server. Easiest options:
+
+- **Python:** `python -m http.server 8000` then open `http://localhost:8000`
+- **Node:** `npx serve` then open the URL it prints
+- **VS Code Live Server** extension
+
+### On GitHub Pages
+1. Push to GitHub.
+2. **Settings → Pages → Source: Deploy from branch → main → / (root)**.
+3. Visit `https://YOUR-USERNAME.github.io/REPO-NAME/`.
+
+## 🚦 How the Busyness Indicator Works
+
+There are two separate signals, and it's worth understanding which is which:
+
+### 1. Community busyness (the colored dots on parking spots)
+This is **community-driven**, based on the number of free spots the latest reporter said are available. It's not Google data; it's your users' data.
+
+| Free spots reported | Color | Meaning |
+|---|---|---|
+| 4 or more | 🟢 Green | Not busy |
+| 2–3 | 🟡 Yellow | Medium |
+| 0–1 | 🔴 Red | Busy |
+| No update in last 6 hours | ⚪ Gray | Stale data |
+
+You can change these thresholds in `js/config.js` (`BUSYNESS` constants).
+
+### 2. Google's road traffic layer (the toggle button)
+This is Google's **real-time road traffic** — green/orange/red lines on roads, same as you see in the Google Maps app. Toggle it with the 🚦 Traffic button.
+
+**Why two signals?** Google does not expose a public API for parking lot busyness. The "Popular Times" data inside the Google Maps app is internal. The closest official proxy Google offers is road traffic, which tells you if the *area* around the spot is busy. Combined with community reports of actual free spots, you get a complete picture.
 
 ## 📁 Project Structure
 
@@ -38,32 +71,29 @@ parkshare/
 ├── pages/
 │   └── details.html        # Spot details + timer
 ├── css/
-│   └── styles.css          # All styles
+│   └── styles.css
 ├── js/
+│   ├── config.js           # 👈 paste your API key here
 │   ├── data.js             # localStorage data layer
-│   ├── app.js              # Home screen logic
-│   └── details.js          # Details + timer logic
+│   ├── app.js              # Home screen
+│   └── details.js          # Details + timer
 ├── README.md
 └── .gitignore
 ```
 
-## 🛠️ Tech Stack
-
-- **HTML5 / CSS3 / Vanilla JavaScript** — no frameworks
-- **[Leaflet](https://leafletjs.com/)** — open-source interactive maps
-- **OpenStreetMap** — free map tiles
-- **localStorage** — client-side data persistence
-
 ## 🔄 Going Beyond MVP
 
-Currently each user sees their own localStorage data. To make spots truly shared across users, plug in a backend:
+Data lives in each visitor's `localStorage`, so spots are not yet shared across users. To make it a true community app, swap the `DataStore` methods in `js/data.js` for calls to a backend:
 
 - **Firebase Firestore** — quick, free tier, real-time sync
 - **Supabase** — Postgres + realtime + auth
-- **Custom Node.js/Express + MongoDB** — full control
 
-Replace the `DataStore` object in `js/data.js` with API calls; the rest of the app stays the same.
+The rest of the app stays the same.
+
+## ⚠️ A note on API key exposure
+
+The API key is visible in the client-side code (`config.js`). This is normal and expected for Google Maps JavaScript API. **The HTTP-referrer restriction you set up in step 5 above is what keeps it safe** — even if someone copies the key, they can't use it from any other domain. If you skip that step, you risk someone running up a bill on your account.
 
 ## 📄 License
 
-MIT — free to use, modify, and share.
+MIT
