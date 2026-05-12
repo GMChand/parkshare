@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2d6a4f" />
   <title>ParkShare — Community Parking</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -13,29 +14,58 @@
       <h1>ParkShare</h1>
     </div>
     <nav class="header-actions">
-      <button id="trafficToggle" class="btn btn-secondary" title="Toggle road traffic layer">🚦 Traffic</button>
-      <button id="reportBtn" class="btn btn-primary">+ Report Spot</button>
+      <button id="trafficToggle" class="btn btn-secondary btn-icon" title="Toggle road traffic layer" aria-label="Toggle traffic">🚦</button>
     </nav>
   </header>
 
+  <!-- Search + filter bar -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔎</span>
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Search address or place (e.g. Senate Square)"
+        autocomplete="off"
+      />
+      <button id="clearSearchBtn" class="clear-search" title="Clear search" aria-label="Clear search">×</button>
+    </div>
+    <div class="filter-controls">
+      <label class="select-label">
+        <span>Within</span>
+        <select id="radiusSelect">
+          <!-- options populated from config in JS -->
+        </select>
+      </label>
+      <button id="useLocationBtn" class="btn btn-secondary btn-icon" title="Search from my location" aria-label="My location">📍</button>
+    </div>
+  </div>
+
   <!-- Busyness legend -->
   <div class="legend">
-    <span class="legend-title">Community busyness:</span>
-    <span class="legend-item"><span class="dot dot-green"></span> Not busy</span>
-    <span class="legend-item"><span class="dot dot-yellow"></span> Medium</span>
-    <span class="legend-item"><span class="dot dot-red"></span> Busy</span>
-    <span class="legend-item"><span class="dot dot-gray"></span> Stale</span>
+    <span class="legend-title">Traffic / access:</span>
+    <span class="legend-item"><span class="dot dot-green"></span> Low</span>
+    <span class="legend-item"><span class="dot dot-yellow"></span> Moderate</span>
+    <span class="legend-item"><span class="dot dot-red"></span> Heavy</span>
+    <span class="legend-item legend-source"><span class="badge-mini">P</span> User</span>
+    <span class="legend-item legend-source"><span class="badge-mini badge-google">G</span> Google</span>
   </div>
 
   <main class="home-layout">
     <section class="map-section">
       <div id="map"></div>
-      <button id="locateBtn" class="locate-btn" title="My Location">📍</button>
+      <button id="locateBtn" class="locate-btn" title="My Location" aria-label="My location">📍</button>
+      <!-- Double-tap hint shown on first load -->
+      <div id="gestureHint" class="gesture-hint">
+        Double-tap the map to drop a parking pin
+      </div>
+      <!-- Toast for feedback -->
+      <div id="toast" class="toast"></div>
     </section>
 
     <section class="list-section">
       <div class="list-header">
-        <h2>Nearby Free Spots</h2>
+        <h2 id="listTitle">Nearby Free Spots</h2>
         <span id="spotCount" class="badge">0</span>
       </div>
       <div id="spotList" class="spot-list">
@@ -44,18 +74,44 @@
     </section>
   </main>
 
+  <!-- Pin Adjustment / Report Panel -->
+  <!-- Shown after dropping a pin: lets user confirm/adjust then open full report form -->
+  <div id="pinPanel" class="pin-panel hidden" role="dialog" aria-label="Adjust pin">
+    <div class="pin-panel-handle"></div>
+    <div class="pin-panel-content">
+      <h3>📍 Pin dropped</h3>
+      <p class="pin-address" id="pinAddress">Fetching address…</p>
+      <p class="pin-hint">Drag the pin on the map to fine-tune the exact spot.</p>
+      <div class="pin-panel-actions">
+        <button id="pinCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="pinContinueBtn" class="btn btn-primary">Continue →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Report Spot Modal -->
   <div id="reportModal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
         <h3>Report a Parking Spot</h3>
-        <button class="close-btn" data-close="reportModal">×</button>
+        <button class="close-btn" data-close="reportModal" aria-label="Close">×</button>
       </div>
       <form id="reportForm">
         <label>
-          Spot Name
-          <input type="text" id="spotName" required placeholder="e.g. Main St near Café" />
+          Spot Name / Address
+          <div class="input-with-action">
+            <input type="text" id="spotName" required placeholder="Address or short name" />
+            <button type="button" id="refetchAddressBtn" class="btn-inline" title="Refetch address from pin location">↻</button>
+          </div>
         </label>
+
+        <!-- Mini-map for fine-tuning the pin BEFORE saving -->
+        <div class="mini-map-wrap">
+          <span class="label">Fine-tune position</span>
+          <div id="reportMiniMap" class="mini-map"></div>
+          <p class="hint">Drag the pin to adjust. Address will refresh automatically.</p>
+        </div>
+
         <label>
           Number of Free Spots
           <input type="number" id="freeSpots" min="0" max="50" value="3" required />
@@ -68,26 +124,24 @@
           Notes / Restrictions
           <textarea id="notes" rows="3" placeholder="e.g. Free after 6PM, no parking on Sundays"></textarea>
         </label>
-        <p class="hint">📍 Click on the map to set the spot location, or use your current location.</p>
         <div id="coordsDisplay" class="coords">No location selected</div>
         <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="useMyLocationBtn">Use My Location</button>
           <button type="submit" class="btn btn-primary">Save Spot</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Configuration & data must load before Google Maps callback fires -->
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
 
-  <!-- Google Maps API loader. callback=initMap is required. -->
+  <!-- Google Maps loader. We load Places (New) library + Geocoding (built-in) -->
   <script>
     (function() {
       const script = document.createElement('script');
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY + '&callback=initMap&v=weekly';
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY +
+                   '&libraries=places,geometry&callback=initMap&v=weekly';
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);

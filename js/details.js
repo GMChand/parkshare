@@ -1,6 +1,5 @@
 /* ===========================
    ParkShare — Spot Details Page
-   (Google Maps version)
    =========================== */
 
 let currentSpot = null;
@@ -8,28 +7,10 @@ let timerInterval = null;
 let detailMap = null;
 
 function getSpotId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('id');
+  return new URLSearchParams(window.location.search).get('id');
 }
 
-function getBusyness(spot) {
-  const hoursSinceUpdate = (Date.now() - spot.updated) / (1000 * 60 * 60);
-  if (hoursSinceUpdate > BUSYNESS.STALE_HOURS) {
-    return { level: 'gray', label: 'Stale', color: '#9ca3af' };
-  }
-  if (spot.freeSpots >= BUSYNESS.GREEN_THRESHOLD) {
-    return { level: 'green', label: 'Not busy', color: '#16a34a' };
-  }
-  if (spot.freeSpots <= BUSYNESS.RED_THRESHOLD) {
-    return { level: 'red', label: 'Busy', color: '#dc2626' };
-  }
-  return { level: 'yellow', label: 'Medium', color: '#eab308' };
-}
-
-// Called by Google Maps loader once API is ready
-function initDetailMap() {
-  loadSpot();
-}
+function initDetailMap() { loadSpot(); }
 
 function loadSpot() {
   const id = getSpotId();
@@ -44,7 +25,7 @@ function loadSpot() {
     return;
   }
 
-  const busy = getBusyness(currentSpot);
+  const busy = busynessForUserSpot(currentSpot);
 
   document.getElementById('detailName').textContent = currentSpot.name;
   document.getElementById('detailFreeSpots').textContent = currentSpot.freeSpots;
@@ -60,20 +41,18 @@ function loadSpot() {
     navigator.geolocation.getCurrentPosition((pos) => {
       const dist = haversineDistance(pos.coords.latitude, pos.coords.longitude, currentSpot.lat, currentSpot.lng);
       document.getElementById('detailDistance').textContent = formatDistance(dist);
-    }, () => {
-      document.getElementById('detailDistance').textContent = 'Unknown';
-    });
+    }, () => { document.getElementById('detailDistance').textContent = 'Unknown'; });
   } else {
     document.getElementById('detailDistance').textContent = 'Unknown';
   }
 
-  // Render Google mini-map with traffic layer on by default
   detailMap = new google.maps.Map(document.getElementById('detailMap'), {
     center: { lat: currentSpot.lat, lng: currentSpot.lng },
     zoom: 16,
     mapTypeControl: false,
     streetViewControl: false,
-    fullscreenControl: false
+    fullscreenControl: false,
+    gestureHandling: 'cooperative'
   });
 
   new google.maps.Marker({
@@ -90,11 +69,10 @@ function loadSpot() {
     label: { text: 'P', color: '#fff', fontWeight: '700', fontSize: '12px' }
   });
 
-  // Show Google's road-traffic layer here — relevant context for "is the area busy?"
+  // Traffic layer on the details map gives extra context
   const trafficLayer = new google.maps.TrafficLayer();
   trafficLayer.setMap(detailMap);
 
-  // Restore timer if it belongs to this spot
   const activeTimer = DataStore.getTimer();
   if (activeTimer && activeTimer.spotId === currentSpot.id) {
     startTimer(activeTimer.endsAt);
@@ -102,12 +80,11 @@ function loadSpot() {
 }
 
 // ===========================
-// Timer Logic
+// Timer
 // ===========================
 function startTimer(endsAt) {
   document.getElementById('timerSection').classList.remove('hidden');
   DataStore.saveTimer({ spotId: currentSpot.id, endsAt });
-
   if (timerInterval) clearInterval(timerInterval);
   updateTimerDisplay(endsAt);
   timerInterval = setInterval(() => updateTimerDisplay(endsAt), 1000);
@@ -125,7 +102,6 @@ function updateTimerDisplay(endsAt) {
     label.textContent = '⚠️ Time expired!';
     return;
   }
-
   const hours = Math.floor(remaining / 3600000);
   const minutes = Math.floor((remaining % 3600000) / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
@@ -150,38 +126,31 @@ function stopTimer() {
 }
 
 // ===========================
-// Event Listeners
+// Listeners
 // ===========================
 document.getElementById('confirmParkedBtn').addEventListener('click', () => {
   if (!currentSpot) return;
-  const endsAt = Date.now() + currentSpot.duration * 60 * 1000;
-  startTimer(endsAt);
+  startTimer(Date.now() + currentSpot.duration * 60 * 1000);
 });
-
 document.getElementById('stopTimerBtn').addEventListener('click', () => {
   if (confirm('Stop and clear this parking timer?')) stopTimer();
 });
-
 document.getElementById('adjustTimerBtn').addEventListener('click', () => {
   document.getElementById('newDuration').value = currentSpot.duration;
   document.getElementById('adjustModal').classList.remove('hidden');
 });
-
 document.getElementById('saveAdjustBtn').addEventListener('click', () => {
   const newDur = parseInt(document.getElementById('newDuration').value, 10);
   if (isNaN(newDur) || newDur < 1) return alert('Enter a valid number of minutes.');
-  const endsAt = Date.now() + newDur * 60 * 1000;
-  startTimer(endsAt);
+  startTimer(Date.now() + newDur * 60 * 1000);
   document.getElementById('adjustModal').classList.add('hidden');
 });
-
 document.getElementById('correctInfoBtn').addEventListener('click', () => {
   document.getElementById('correctFreeSpots').value = currentSpot.freeSpots;
   document.getElementById('correctDuration').value = currentSpot.duration;
   document.getElementById('correctNotes').value = currentSpot.notes || '';
   document.getElementById('correctModal').classList.remove('hidden');
 });
-
 document.getElementById('correctForm').addEventListener('submit', (e) => {
   e.preventDefault();
   DataStore.update(currentSpot.id, {
@@ -192,18 +161,15 @@ document.getElementById('correctForm').addEventListener('submit', (e) => {
   document.getElementById('correctModal').classList.add('hidden');
   loadSpot();
 });
-
 document.getElementById('deleteSpotBtn').addEventListener('click', () => {
   if (!confirm('Delete this parking spot? This cannot be undone.')) return;
   DataStore.remove(currentSpot.id);
   window.location.href = '../index.html';
 });
-
 document.querySelectorAll('.close-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.getElementById(btn.dataset.close).classList.add('hidden');
   });
 });
 
-// Required for Google Maps callback to find it
 window.initDetailMap = initDetailMap;
