@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spot Details — ParkShare</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <a href="../index.html" class="back-link">← Back</a>
+      <h1>Spot Details</h1>
+    </div>
+  </header>
+
+  <main class="detail-layout">
+    <div id="detailMap" class="detail-map"></div>
+
+    <div class="detail-card">
+      <h2 id="detailName">Loading...</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Free Spots</span>
+          <span id="detailFreeSpots" class="value">--</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Default Duration</span>
+          <span id="detailDuration" class="value">--</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Distance</span>
+          <span id="detailDistance" class="value">--</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Last Updated</span>
+          <span id="detailUpdated" class="value">--</span>
+        </div>
+      </div>
+
+      <div class="notes-box">
+        <span class="label">Notes</span>
+        <p id="detailNotes">--</p>
+      </div>
+
+      <div class="action-buttons">
+        <button id="confirmParkedBtn" class="btn btn-primary btn-large">I've Parked Here</button>
+        <button id="correctInfoBtn" class="btn btn-secondary">Correct Info</button>
+      </div>
+    </div>
+
+    <!-- Timer Section (hidden until user parks) -->
+    <div id="timerSection" class="timer-section hidden">
+      <h3>Parking Timer</h3>
+      <div id="timerDisplay" class="timer-display">00:00:00</div>
+      <p class="timer-label" id="timerLabel">Time remaining</p>
+      <div class="timer-controls">
+        <button id="adjustTimerBtn" class="btn btn-secondary">Adjust Timer</button>
+        <button id="stopTimerBtn" class="btn btn-danger">Stop Timer</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Adjust Timer Modal -->
+  <div id="adjustModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Adjust Timer</h3>
+        <button class="close-btn" data-close="adjustModal">×</button>
+      </div>
+      <label>
+        New duration (minutes)
+        <input type="number" id="newDuration" min="1" max="1440" value="60" />
+      </label>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="saveAdjustBtn">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Correct Info Modal -->
+  <div id="correctModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Correct Spot Info</h3>
+        <button class="close-btn" data-close="correctModal">×</button>
+      </div>
+      <form id="correctForm">
+        <label>
+          Free Spots
+          <input type="number" id="correctFreeSpots" min="0" max="50" required />
+        </label>
+        <label>
+          Default Duration (min)
+          <input type="number" id="correctDuration" min="5" max="1440" required />
+        </label>
+        <label>
+          Notes
+          <textarea id="correctNotes" rows="3"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="deleteSpotBtn">Delete Spot</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/details.js"></script>
+</body>
+</html>

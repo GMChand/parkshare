@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ParkShare — Community Parking</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">P</span>
+      <h1>ParkShare</h1>
+    </div>
+    <nav>
+      <button id="reportBtn" class="btn btn-primary">+ Report Spot</button>
+    </nav>
+  </header>
+
+  <main class="home-layout">
+    <!-- Map View -->
+    <section class="map-section">
+      <div id="map"></div>
+      <button id="locateBtn" class="locate-btn" title="My Location">📍</button>
+    </section>
+
+    <!-- List View -->
+    <section class="list-section">
+      <div class="list-header">
+        <h2>Nearby Free Spots</h2>
+        <span id="spotCount" class="badge">0</span>
+      </div>
+      <div id="spotList" class="spot-list">
+        <p class="empty-state">Loading parking spots...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Report Spot Modal -->
+  <div id="reportModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Report a Parking Spot</h3>
+        <button class="close-btn" data-close="reportModal">×</button>
+      </div>
+      <form id="reportForm">
+        <label>
+          Spot Name
+          <input type="text" id="spotName" required placeholder="e.g. Main St near Café" />
+        </label>
+        <label>
+          Number of Free Spots
+          <input type="number" id="freeSpots" min="1" max="50" value="1" required />
+        </label>
+        <label>
+          Default Parking Duration (minutes)
+          <input type="number" id="duration" min="5" max="1440" value="60" required />
+        </label>
+        <label>
+          Notes / Restrictions
+          <textarea id="notes" rows="3" placeholder="e.g. Free after 6PM, no parking on Sundays"></textarea>
+        </label>
+        <p class="hint">📍 Click on the map to set the spot location, or use your current location.</p>
+        <div id="coordsDisplay" class="coords">No location selected</div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="useMyLocationBtn">Use My Location</button>
+          <button type="submit" class="btn btn-primary">Save Spot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
