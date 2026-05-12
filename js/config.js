@@ -7,7 +7,7 @@
 //   1. Maps JavaScript API
 //   2. Places API (New)
 //   3. Geocoding API
-const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDEKvgvn2HAa8OFguSBPIY3zEn8LFQcuqo';
 
 // Default map center (used if user denies geolocation). Helsinki by default.
 const DEFAULT_CENTER = { lat: 60.1699, lng: 24.9384 };
